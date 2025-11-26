@@ -24,8 +24,7 @@ class CursoSerializer(serializers.ModelSerializer):
         read_only_fields = ('fecha_creacion',)
     
     def validate_instructor_id(self, value):
-        """Validar que el instructor_id corresponda a un instructor válido"""
-        if value is not None:  # Permitir None
+        if value is not None: 
             try:
                 instructor = User.objects.get(id=value)
                 if instructor.perfil not in ['instructor', 'administrador']:

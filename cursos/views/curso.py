@@ -14,7 +14,6 @@ User = get_user_model()
 
 
 class CustomPermission:
-    """Permisos personalizados para diferentes tipos de usuarios"""
     
     @staticmethod
     def es_instructor_o_admin(user):
@@ -52,37 +51,30 @@ class CursoViewSet(viewsets.ModelViewSet):
         return CursoSerializer
     
     def perform_create(self, serializer):
-        # Solo instructores y admins pueden crear cursos
         if not CustomPermission.es_instructor_o_admin(self.request.user):
             raise permissions.PermissionDenied("Solo instructores pueden crear cursos")
         
         instructor_id = serializer.validated_data.get('instructor_id')
         
         if self.request.user.perfil == 'administrador':
-            # Admin puede asignar cualquier instructor o dejarlo vacío
             if instructor_id:
                 instructor = User.objects.get(id=instructor_id)
                 serializer.save(instructor=instructor)
             else:
-                # Si no especifica instructor, lo deja vacío
                 serializer.save(instructor=None)
         else:
-            # Instructores solo pueden asignarse a sí mismos
             if instructor_id and instructor_id != self.request.user.id:
                 raise permissions.PermissionDenied("Los instructores solo pueden crear cursos para sí mismos")
             serializer.save(instructor=self.request.user)
     
     def perform_update(self, serializer):
-        # Solo el propietario o admin pueden editar
         if not CustomPermission.es_propietario_o_admin(self.request.user, self.get_object()):
             raise permissions.PermissionDenied("No tienes permisos para editar este curso")
         serializer.save()
     
     def perform_destroy(self, instance):
-        # Solo el propietario o admin pueden eliminar
         if not CustomPermission.es_propietario_o_admin(self.request.user, instance):
             raise permissions.PermissionDenied("No tienes permisos para eliminar este curso")
-        # En lugar de eliminar, marcar como inactivo
         instance.activo = False
         instance.save()
     

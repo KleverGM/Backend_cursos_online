@@ -10,14 +10,14 @@ API REST para sistema de gestión de cursos online con Django REST Framework y a
 
 ### 1. Clonar repositorio
 ```bash
-git clone https://github.com/KleverGM/seminario_integracion.git
-cd seminario_integracion/backend_cursos_online
+git https://github.com/KleverGM/Backend_cursos_online.git
+cd backend_cursos_online
 ```
 
 ### 2. Crear entorno virtual
 ```bash
 python -m venv .venv
-.venv\Scripts\activate  # Windows
+.venv\Scripts\activate 
 ```
 
 ### 3. Instalar dependencias

@@ -24,12 +24,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     ordering = ['-fecha_creacion']
     
     def get_permissions(self):
-        """
-        Configurar permisos por acción:
-        - create: Solo registro público (se maneja por endpoint separado)
-        - list/retrieve: Usuario autenticado
-        - update/partial_update/destroy: Solo administradores o el mismo usuario
-        """
+      
         if self.action == 'create':
             # El registro se maneja por endpoint separado, aquí solo admin
             permission_classes = [IsAuthenticated]
@@ -110,11 +105,9 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_view(request):
-    """Registro de nuevo usuario"""
     serializer = UsuarioSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        # Crear tokens JWT
         refresh = RefreshToken.for_user(user)
         return Response({
             'message': 'Usuario creado exitosamente',

@@ -17,7 +17,6 @@ class AvisoViewSet(viewsets.ModelViewSet):
     ordering = ['-fecha_creacion']
     
     def get_queryset(self):
-        # Los usuarios normales solo ven sus propios avisos
         if self.request.user.perfil == 'administrador':
             return Aviso.objects.all()
         return Aviso.objects.filter(usuario=self.request.user)
@@ -26,14 +25,12 @@ class AvisoViewSet(viewsets.ModelViewSet):
         serializer.save(usuario=self.request.user)
     
     def perform_update(self, serializer):
-        # Solo el propietario o admin pueden actualizar
         if (self.request.user.perfil != 'administrador' and 
             self.get_object().usuario != self.request.user):
             raise permissions.PermissionDenied("No tienes permisos para actualizar este aviso")
         serializer.save()
     
     def perform_destroy(self, instance):
-        # Solo el propietario o admin pueden eliminar
         if (self.request.user.perfil != 'administrador' and 
             instance.usuario != self.request.user):
             raise permissions.PermissionDenied("No tienes permisos para eliminar este aviso")
