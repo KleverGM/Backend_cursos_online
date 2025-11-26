@@ -1,0 +1,61 @@
+# Archivos Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Entornos virtuales
+env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Variables de entorno y configuración sensible
+.env
+.env.local
+.env.production
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Bases de datos
+*.sqlite3
+db.sqlite3
+
+# Archivos de coverage y testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.tox/
+
+# Archivos media y estáticos (en producción)
+media/
+staticfiles/
+static_collected/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales de desarrollo (ya eliminados)
+test_*.py
+fix_*.py
+update_*.py
+create_db.py
+REORGANIZACION_*.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Certificados y claves
+*.key
+*.crt
+*.pem
