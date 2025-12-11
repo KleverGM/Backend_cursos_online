@@ -49,6 +49,16 @@ class ModuloModelTest(TestCase):
 class ModuloAPITest(APITestCase):
     """Tests para las APIs de módulo"""
     
+    def setUp(self):
+        """Configurar usuario autenticado para los tests"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123',
+            perfil='estudiante'
+        )
+        self.client.force_authenticate(user=self.user)
+    
     def test_list_modulos(self):
         """Test de listado de módulos"""
         response = self.client.get('/api/modulos/')

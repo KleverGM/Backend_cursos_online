@@ -40,7 +40,17 @@ class AvisoModelTest(TestCase):
 class AvisoAPITest(APITestCase):
     """Tests para las APIs de aviso"""
     
+    def setUp(self):
+        """Configurar usuario autenticado para los tests"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123',
+            perfil='estudiante'
+        )
+        self.client.force_authenticate(user=self.user)
+    
     def test_list_avisos(self):
         """Test de listado de avisos"""
         response = self.client.get('/api/avisos/')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

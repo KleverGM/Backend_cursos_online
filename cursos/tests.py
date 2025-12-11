@@ -57,6 +57,9 @@ class CursoAPITest(APITestCase):
             nivel='principiante',
             instructor=self.instructor
         )
+        
+        # Autenticar cliente para los tests
+        self.client.force_authenticate(user=self.instructor)
     
     def test_list_cursos(self):
         """Test de listado de cursos"""
