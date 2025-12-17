@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 import os
 import dj_database_url
 from datetime import timedelta
+from pymongo import MongoClient
 
 # Cargar variables de entorno
 load_dotenv()
@@ -250,3 +251,19 @@ if not DEBUG:
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.Usuario'
+
+# MongoDB Configuration
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+MONGO_DB = os.getenv('MONGO_DB', 'mongo_cursos_online')
+
+# Conexión a MongoDB
+try:
+    mongo_client = MongoClient(MONGO_URI)
+    mongo_db = mongo_client[MONGO_DB]
+    # Verificar la conexión
+    mongo_client.server_info()
+    print(f"✓ Conexión exitosa a MongoDB: {MONGO_DB}")
+except Exception as e:
+    print(f"✗ Error al conectar con MongoDB: {str(e)}")
+    mongo_client = None
+    mongo_db = None
