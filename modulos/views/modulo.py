@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from ..models import Modulo
@@ -31,6 +31,12 @@ class ModuloViewSet(viewsets.ModelViewSet):
     filterset_fields = ['curso']
     ordering_fields = ['orden']
     ordering = ['curso', 'orden']
+    
+    def get_permissions(self):
+        """Permitir acceso público para ver módulos (son solo estructura/índice)"""
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     
     def get_serializer_class(self):
         if self.action == 'retrieve':

@@ -11,6 +11,7 @@ class Seccion(models.Model):
     orden = models.PositiveIntegerField(default=1)
     modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE, related_name='secciones')
     duracion_minutos = models.PositiveIntegerField(default=0, help_text='Duración en minutos')
+    es_preview = models.BooleanField(default=False, help_text='Si es True, la sección es pública como vista previa')
     
     class Meta:
         verbose_name = 'Sección'

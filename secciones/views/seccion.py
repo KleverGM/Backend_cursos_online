@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from ..models import Seccion, ProgresoSeccion
@@ -33,10 +33,58 @@ class SeccionViewSet(viewsets.ModelViewSet):
     ordering_fields = ['orden']
     ordering = ['modulo', 'orden']
     
+    def get_permissions(self):
+        """Requiere autenticación para todas las acciones"""
+        return [IsAuthenticated()]
+    
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return SeccionDetalladaSerializer
         return SeccionSerializer
+    
+    def retrieve(self, request, pk=None):
+        """Obtener detalle de una sección con validación de acceso"""
+        seccion = self.get_object()
+        
+        # Admin e instructor del curso siempre tienen acceso
+        if request.user.perfil == 'administrador' or seccion.modulo.curso.instructor == request.user:
+            serializer = self.get_serializer(seccion)
+            return Response(serializer.data)
+        
+        # Verificar si el usuario está inscrito en el curso
+        from inscripciones.models import Inscripcion
+        if not Inscripcion.objects.filter(usuario=request.user, curso=seccion.modulo.curso).exists():
+            return Response(
+                {'detail': 'Debes estar inscrito en el curso para ver esta sección'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(seccion)
+        return Response(serializer.data)
+    
+    def list(self, request):
+        """Listar secciones con filtrado según inscripción"""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Si es admin, mostrar todas
+        if request.user.perfil == 'administrador':
+            pass  # No filtrar nada
+        # Si es instructor, mostrar solo sus secciones
+        elif request.user.perfil == 'instructor':
+            queryset = queryset.filter(modulo__curso__instructor=request.user)
+        # Si es estudiante, mostrar solo de cursos inscritos
+        else:
+            from inscripciones.models import Inscripcion
+            cursos_inscritos = Inscripcion.objects.filter(usuario=request.user).values_list('curso_id', flat=True)
+            queryset = queryset.filter(modulo__curso_id__in=cursos_inscritos)
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def perform_create(self, serializer):
         # Solo el instructor del curso o admin pueden crear secciones
@@ -106,8 +154,23 @@ class ProgresoSeccionViewSet(viewsets.ModelViewSet):
     filterset_fields = ['completado', 'seccion__modulo__curso']
     
     def get_queryset(self):
-        # Solo mostrar el progreso del usuario autenticado
+        # Admin ve todo, usuarios solo su progreso
+        if self.request.user.perfil == 'administrador':
+            return ProgresoSeccion.objects.all()
         return ProgresoSeccion.objects.filter(usuario=self.request.user)
     
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+    
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        # Solo el propietario o admin pueden actualizar
+        if instance.usuario != self.request.user and self.request.user.perfil != 'administrador':
+            raise permissions.PermissionDenied("No tienes permisos para actualizar este progreso")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        # Solo admin puede eliminar progreso
+        if self.request.user.perfil != 'administrador':
+            raise permissions.PermissionDenied("Solo administradores pueden eliminar registros de progreso")
+        instance.delete()

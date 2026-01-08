@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from cursos.models import Curso
+from model_utils import FieldTracker
 
 User = get_user_model()
 
@@ -26,6 +27,9 @@ class Inscripcion(models.Model):
     )
     completado = models.BooleanField(default=False)
     fecha_completado = models.DateTimeField(blank=True, null=True)
+    
+    # Field tracker para detectar cambios
+    tracker = FieldTracker(fields=['completado'])
     
     class Meta:
         verbose_name = 'Inscripción'

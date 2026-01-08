@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import os
 import dj_database_url
 from datetime import timedelta
-from pymongo import MongoClient
+import mongoengine
 
 # Cargar variables de entorno
 load_dotenv()
@@ -39,19 +39,21 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Debe estar primero para Channels
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
     'corsheaders',
-    
+    'channels',  # Django Channels para WebSockets
+
     # Local apps
     'users',
     'cursos',
@@ -59,6 +61,9 @@ INSTALLED_APPS = [
     'secciones',
     'inscripciones',
     'avisos',
+    'resenas',
+    'analytics',
+    'notificaciones',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +79,32 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'curso_online_project.urls'
+
+# ASGI Application for Channels
+ASGI_APPLICATION = 'curso_online_project.asgi.application'
+
+# Channel Layers
+# Para desarrollo sin Redis, usar InMemoryChannelLayer
+# Para producción con Redis, cambiar a RedisChannelLayer
+USE_REDIS = os.getenv('USE_REDIS', 'False').lower() == 'true'
+
+if USE_REDIS:
+    # Configuración con Redis (producción)
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [(os.getenv('REDIS_HOST', '127.0.0.1'), int(os.getenv('REDIS_PORT', 6379)))],
+            },
+        },
+    }
+else:
+    # Configuración in-memory (desarrollo sin Redis)
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        },
+    }
 
 TEMPLATES = [
     {
@@ -114,7 +145,7 @@ elif os.getenv('DB_NAME'):
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'), 
+            'USER': os.getenv('DB_USER'),
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '5432'),
@@ -211,8 +242,8 @@ REST_FRAMEWORK = {
 
 # JWT Configuration
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME', 60))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME', 1440))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_DAYS', 7))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 30))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': os.getenv('JWT_ALGORITHM', 'HS256'),
@@ -252,18 +283,19 @@ if not DEBUG:
 # Custom User Model
 AUTH_USER_MODEL = 'users.Usuario'
 
-# MongoDB Configuration
+# ============================================
+# MONGODB CONFIGURATION (MongoEngine)
+# ============================================
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
 MONGO_DB = os.getenv('MONGO_DB', 'mongo_cursos_online')
 
-# Conexión a MongoDB
+# Conectar a MongoDB usando MongoEngine
 try:
-    mongo_client = MongoClient(MONGO_URI)
-    mongo_db = mongo_client[MONGO_DB]
-    # Verificar la conexión
-    mongo_client.server_info()
+    mongoengine.connect(
+        db=MONGO_DB,
+        host=MONGO_URI,
+        alias='default'
+    )
     print(f"✓ Conexión exitosa a MongoDB: {MONGO_DB}")
 except Exception as e:
     print(f"✗ Error al conectar con MongoDB: {str(e)}")
-    mongo_client = None
-    mongo_db = None
