@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q, Sum, Avg, Count
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -52,7 +52,7 @@ class CursoViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         if not CustomPermission.es_instructor_o_admin(self.request.user):
-            raise permissions.PermissionDenied("Solo instructores pueden crear cursos")
+            raise exceptions.PermissionDenied("Solo instructores pueden crear cursos")
         
         instructor_id = serializer.validated_data.get('instructor_id')
         
