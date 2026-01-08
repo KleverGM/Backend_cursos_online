@@ -58,7 +58,7 @@ def notificar_nueva_inscripcion(sender, instance, created, **kwargs):
             logger.info(f"[SIGNAL] Creando notificación para estudiante ID={estudiante.id}")
             notificacion_estudiante = Notificacion(
                 usuario_id=estudiante.id,
-                tipo='curso_actualizado',  # Usando este tipo genérico
+                tipo='nueva_inscripcion',
                 titulo=f'¡Bienvenido a {curso.titulo}!',
                 mensaje=f'Te has inscrito exitosamente en el curso "{curso.titulo}". ¡Comienza tu aprendizaje ahora!',
                 datos_extra={
