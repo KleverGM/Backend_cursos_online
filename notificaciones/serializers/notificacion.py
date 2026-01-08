@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from notificaciones.models import Notificacion
 from datetime import datetime
+import logging
+
+logger = logging.getLogger('notificaciones')
 
 
 class NotificacionSerializer(serializers.Serializer):
@@ -23,13 +26,13 @@ class NotificacionSerializer(serializers.Serializer):
     def create(self, validated_data):
         """Crea una nueva notificación en MongoDB"""
         try:
-            print(f"[DEBUG] Creando notificación con datos: {validated_data}")
+            logger.info(f"Creando notificación con datos: {validated_data}")
             notificacion = Notificacion(**validated_data)
             notificacion.save()
-            print(f"[DEBUG] Notificación guardada exitosamente. ID: {notificacion.id}")
+            logger.info(f"✓ Notificación guardada exitosamente. ID: {notificacion.id}")
             return notificacion
         except Exception as e:
-            print(f"[ERROR] Error al crear notificación: {str(e)}")
+            logger.error(f"✗ Error al crear notificación: {str(e)}")
             raise
     
     def update(self, instance, validated_data):

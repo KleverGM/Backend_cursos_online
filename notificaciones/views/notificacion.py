@@ -4,11 +4,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from bson import ObjectId
 from bson.errors import InvalidId
+import logging
 
 from notificaciones.models import Notificacion
 from notificaciones.serializers import NotificacionSerializer
 from notificaciones.permissions import IsOwnerOrAdmin, IsAdminUser
 from notificaciones.pagination import NotificacionPagination
+
+logger = logging.getLogger('notificaciones')
 
 
 class NotificacionViewSet(viewsets.ViewSet):
@@ -90,14 +93,14 @@ class NotificacionViewSet(viewsets.ViewSet):
                 try:
                     self._enviar_por_websocket(notificacion)
                 except Exception as ws_error:
-                    print(f"Error al enviar por WebSocket: {ws_error}")
+                    logger.warning(f"Error al enviar por WebSocket: {ws_error}")
                 
                 return Response(
                     serializer.data,
                     status=status.HTTP_201_CREATED
                 )
             except Exception as e:
-                print(f"Error al guardar notificación: {str(e)}")
+                logger.error(f"✗ Error al guardar notificación: {str(e)}")
                 return Response(
                     {'error': f'Error al guardar en MongoDB: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
