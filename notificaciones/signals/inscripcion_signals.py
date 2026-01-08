@@ -113,7 +113,7 @@ def notificar_curso_completado(sender, instance, created, **kwargs):
                     'curso_id': curso.id,
                     'estudiante_id': estudiante.id,
                     'estudiante_nombre': estudiante.get_full_name() or estudiante.email,
-                    'progreso': instance.progreso,
+                    'progreso': float(instance.progreso),
                 }
             )
             notificacion_instructor.save()
@@ -135,7 +135,7 @@ def notificar_curso_completado(sender, instance, created, **kwargs):
                     'inscripcion_id': instance.id,
                     'curso_id': curso.id,
                     'instructor_id': instructor.id,
-                    'progreso': instance.progreso,
+                    'progreso': float(instance.progreso),
                     'accion': 'curso_completado',
                 }
             )
