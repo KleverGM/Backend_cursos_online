@@ -76,15 +76,32 @@ class NotificacionViewSet(viewsets.ViewSet):
         serializer = NotificacionSerializer(data=request.data)
         
         if serializer.is_valid():
-            notificacion = serializer.save()
-            
-            # Enviar notificación por WebSocket
-            self._enviar_por_websocket(notificacion)
-            
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
+            try:
+                notificacion = serializer.save()
+                
+                # Verificar que se guardó correctamente
+                if not notificacion.id:
+                    return Response(
+                        {'error': 'La notificación no se guardó correctamente en MongoDB'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                
+                # Enviar notificación por WebSocket
+                try:
+                    self._enviar_por_websocket(notificacion)
+                except Exception as ws_error:
+                    print(f"Error al enviar por WebSocket: {ws_error}")
+                
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            except Exception as e:
+                print(f"Error al guardar notificación: {str(e)}")
+                return Response(
+                    {'error': f'Error al guardar en MongoDB: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         
         return Response(
             serializer.errors,

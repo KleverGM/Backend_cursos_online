@@ -22,9 +22,15 @@ class NotificacionSerializer(serializers.Serializer):
     
     def create(self, validated_data):
         """Crea una nueva notificación en MongoDB"""
-        notificacion = Notificacion(**validated_data)
-        notificacion.save()
-        return notificacion
+        try:
+            print(f"[DEBUG] Creando notificación con datos: {validated_data}")
+            notificacion = Notificacion(**validated_data)
+            notificacion.save()
+            print(f"[DEBUG] Notificación guardada exitosamente. ID: {notificacion.id}")
+            return notificacion
+        except Exception as e:
+            print(f"[ERROR] Error al crear notificación: {str(e)}")
+            raise
     
     def update(self, instance, validated_data):
         """Actualiza una notificación existente"""
