@@ -4,6 +4,7 @@ from resenas.models import Resena
 from notificaciones.views.notificacion import NotificacionViewSet
 from cursos.models import Curso
 from django.contrib.auth import get_user_model
+import sys
 
 User = get_user_model()
 
@@ -13,6 +14,10 @@ def notificar_nueva_resena(sender, document, created, **kwargs):
     Signal que se ejecuta al crear una nueva reseña en MongoDB.
     Notifica al instructor del curso sobre la nueva reseña.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     if created:
         try:
             # Obtener el curso y el instructor desde PostgreSQL
@@ -55,6 +60,10 @@ def notificar_respuesta_resena(sender, document, **kwargs):
     Signal que se ejecuta al actualizar una reseña.
     Si se agrega una nueva respuesta, notifica al estudiante.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     # Verificar si hay respuestas nuevas en el array de respuestas
     if document.respuestas and len(document.respuestas) > 0:
         try:

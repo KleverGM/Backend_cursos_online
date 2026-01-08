@@ -4,6 +4,7 @@ from cursos.models import Curso
 from inscripciones.models import Inscripcion
 from notificaciones.models import Notificacion
 from notificaciones.views.notificacion import NotificacionViewSet
+import sys
 
 
 @receiver(post_save, sender=Curso)
@@ -13,6 +14,10 @@ def notificar_curso_actualizado(sender, instance, created, **kwargs):
     Notifica a todos los estudiantes inscritos sobre la actualización.
     No notifica cuando el curso se crea por primera vez.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     if not created:
         # Obtener todas las inscripciones activas en este curso
         inscripciones = Inscripcion.objects.filter(

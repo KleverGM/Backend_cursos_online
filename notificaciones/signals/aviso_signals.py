@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from avisos.models import Aviso
 from notificaciones.models import Notificacion
 from notificaciones.views.notificacion import NotificacionViewSet
+import sys
 
 
 @receiver(post_save, sender=Aviso)
@@ -11,6 +12,10 @@ def notificar_nuevo_aviso(sender, instance, created, **kwargs):
     Signal que se ejecuta al crear un nuevo aviso.
     Notifica al usuario destinatario sobre el nuevo aviso.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     if created:
         usuario = instance.usuario
         

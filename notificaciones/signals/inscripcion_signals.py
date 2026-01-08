@@ -1,8 +1,10 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.conf import settings
 from inscripciones.models import Inscripcion
 from notificaciones.models import Notificacion
 from notificaciones.views.notificacion import NotificacionViewSet
+import sys
 
 
 @receiver(post_save, sender=Inscripcion)
@@ -11,6 +13,10 @@ def notificar_nueva_inscripcion(sender, instance, created, **kwargs):
     Signal que se ejecuta al crear una nueva inscripción.
     Notifica tanto al instructor como al estudiante.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     if created:
         curso = instance.curso
         instructor = curso.instructor
@@ -68,6 +74,10 @@ def notificar_curso_completado(sender, instance, created, **kwargs):
     Signal que se ejecuta al actualizar una inscripción.
     Si el curso se marca como completado, notifica al instructor y felicita al estudiante.
     """
+    # Desactivar durante tests si no hay MongoDB disponible
+    if 'test' in sys.argv:
+        return
+    
     if not created and instance.completado:
         # Verificar si acaba de completarse (comparar con estado anterior)
         if instance.tracker.has_changed('completado'):

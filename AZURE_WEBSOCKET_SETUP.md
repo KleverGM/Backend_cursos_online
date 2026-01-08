@@ -206,6 +206,7 @@ git push origin main
 ```
 
 **Azure ejecutará automáticamente:**
+
 - ✅ Git pull en el servidor
 - ✅ Instalación de requirements.txt
 - ✅ Migraciones (si está configurado)
@@ -216,16 +217,19 @@ git push origin main
 **⚠️ Esto solo se hace UNA VEZ** (después del primer push):
 
 SSH a tu VM:
+
 ```bash
 ssh tu_usuario@cursos-online-api.desarrollo-software.xyz
 ```
 
 Crear servicio Daphne:
+
 ```bash
 sudo nano /etc/systemd/system/daphne.service
 ```
 
 Copiar contenido (ajusta `tu_usuario` y la ruta):
+
 ```ini
 [Unit]
 Description=Daphne daemon for Cursos Online WebSocket
@@ -249,6 +253,7 @@ WantedBy=multi-user.target
 ```
 
 Activar:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable daphne
@@ -256,6 +261,7 @@ sudo systemctl start daphne
 ```
 
 Actualizar Nginx (agregar bloque `/ws/` de la guía anterior):
+
 ```bash
 sudo nano /etc/nginx/sites-available/cursos_online
 sudo nginx -t
@@ -265,11 +271,13 @@ sudo systemctl reload nginx
 ### Deployments futuros:
 
 Solo necesitas:
+
 ```powershell
 git push origin main
 ```
 
 Y opcionalmente verificar/reiniciar servicios si es necesario:
+
 ```bash
 ssh tu_usuario@cursos-online-api.desarrollo-software.xyz
 sudo systemctl restart daphne  # Solo si es necesario
