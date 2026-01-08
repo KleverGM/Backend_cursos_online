@@ -46,7 +46,7 @@ class NotificacionViewSet(viewsets.ViewSet):
         """
         user = self.request.user
         
-        if hasattr(user, 'rol') and user.rol == 'Administrador':
+        if hasattr(user, 'perfil') and user.perfil == 'administrador':
             return Notificacion.objects.all()
         
         return Notificacion.objects.filter(usuario_id=user.id)
@@ -104,7 +104,7 @@ class NotificacionViewSet(viewsets.ViewSet):
             )
         
         # Verificar permisos (solo el dueño o admin)
-        if not (hasattr(request.user, 'rol') and request.user.rol == 'Administrador'):
+        if not (hasattr(request.user, 'perfil') and request.user.perfil == 'administrador'):
             if notificacion.usuario_id != request.user.id:
                 return Response(
                     {'error': 'No tienes permiso para ver esta notificación'},
@@ -140,7 +140,7 @@ class NotificacionViewSet(viewsets.ViewSet):
         
         # Verificar permisos
         user = request.user
-        is_admin = hasattr(user, 'rol') and user.rol == 'Administrador'
+        is_admin = hasattr(user, 'perfil') and user.perfil == 'administrador'
         is_owner = notificacion.usuario_id == user.id
         
         if not (is_admin or is_owner):
@@ -188,7 +188,7 @@ class NotificacionViewSet(viewsets.ViewSet):
         
         # Verificar permisos
         user = request.user
-        is_admin = hasattr(user, 'rol') and user.rol == 'Administrador'
+        is_admin = hasattr(user, 'perfil') and user.perfil == 'administrador'
         is_owner = notificacion.usuario_id == user.id
         
         if not (is_admin or is_owner):
@@ -235,7 +235,7 @@ class NotificacionViewSet(viewsets.ViewSet):
         
         # Verificar permisos
         user = request.user
-        is_admin = hasattr(user, 'rol') and user.rol == 'Administrador'
+        is_admin = hasattr(user, 'perfil') and user.perfil == 'administrador'
         is_owner = notificacion.usuario_id == user.id
         
         if not (is_admin or is_owner):

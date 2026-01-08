@@ -7,7 +7,7 @@ class IsOwnerOrAdmin(BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         # Admin puede hacer todo
-        if hasattr(request.user, 'rol') and request.user.rol == 'Administrador':
+        if hasattr(request.user, 'perfil') and request.user.perfil == 'administrador':
             return True
         
         # El usuario solo puede acceder a sus propias notificaciones
@@ -22,6 +22,6 @@ class IsAdminUser(BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            hasattr(request.user, 'rol') and 
-            request.user.rol == 'Administrador'
+            hasattr(request.user, 'perfil') and 
+            request.user.perfil == 'administrador'
         )
