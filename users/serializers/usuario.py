@@ -5,14 +5,15 @@ User = get_user_model()
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True, min_length=8, required=False)
     password_confirm = serializers.CharField(write_only=True, required=False)
     tipo_usuario = serializers.CharField(write_only=True, required=False)
+    is_active = serializers.BooleanField(required=False)
     
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                 'perfil', 'fecha_creacion', 'password', 'password_confirm', 'tipo_usuario')
+                 'perfil', 'is_active', 'fecha_creacion', 'password', 'password_confirm', 'tipo_usuario')
         read_only_fields = ('fecha_creacion',)
     
     def validate_tipo_usuario(self, value):
@@ -22,6 +23,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, attrs):
+        # Al crear, la contraseña es obligatoria
+        if self.instance is None and 'password' not in attrs:
+            raise serializers.ValidationError({"password": "La contraseña es requerida al crear un usuario"})
+        
         # Solo validar password_confirm si está presente
         if 'password_confirm' in attrs:
             if attrs.get('password') != attrs.get('password_confirm'):
@@ -39,6 +44,28 @@ class UsuarioSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+    
+    def update(self, instance, validated_data):
+        # Mapear tipo_usuario a perfil si está presente
+        if 'tipo_usuario' in validated_data:
+            validated_data['perfil'] = validated_data.pop('tipo_usuario')
+        
+        # Remover password_confirm si está presente
+        validated_data.pop('password_confirm', None)
+        
+        # Si hay password, actualizarlo aparte
+        password = validated_data.pop('password', None)
+        
+        # Actualizar campos normales
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Si hay password, establecerla
+        if password:
+            instance.set_password(password)
+        
+        instance.save()
+        return instance
 
 
 class UsuarioPublicSerializer(serializers.ModelSerializer):
