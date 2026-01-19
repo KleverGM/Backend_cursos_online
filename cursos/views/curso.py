@@ -64,7 +64,22 @@ class CursoViewSet(viewsets.ModelViewSet):
                 return Curso.objects.filter(instructor=self.request.user)
             return Curso.objects.none()
         
-        # Para el público general (list): solo cursos activos
+        # Para list: administradores ven todos, otros solo activos
+        if self.action == 'list':
+            if self.request.user.is_authenticated and self.request.user.perfil == 'administrador':
+                # Admin puede ver todos los cursos y filtrar por activo
+                queryset = Curso.objects.all()
+                # Respetar el filtro 'activo' si se proporciona en query params
+                activo_param = self.request.query_params.get('activo', None)
+                if activo_param is not None:
+                    # Convertir string a boolean
+                    activo_bool = activo_param.lower() in ['true', '1', 'yes']
+                    queryset = queryset.filter(activo=activo_bool)
+                return queryset
+            # Para el público general: solo cursos activos
+            return Curso.objects.filter(activo=True)
+        
+        # Fallback: solo cursos activos
         return Curso.objects.filter(activo=True)
     
     def get_permissions(self):
