@@ -17,12 +17,19 @@ class UsuarioSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'username': {'required': False},
             'email': {'required': False},
+            'perfil': {'required': False},
         }
     
     def validate_tipo_usuario(self, value):
         """Validar que tipo_usuario sea válido"""
         if value and value not in ['estudiante', 'instructor', 'administrador']:
             raise serializers.ValidationError("tipo_usuario debe ser: estudiante, instructor o administrador")
+        return value
+    
+    def validate_perfil(self, value):
+        """Validar que perfil sea válido"""
+        if value and value not in ['estudiante', 'instructor', 'administrador']:
+            raise serializers.ValidationError("perfil debe ser: estudiante, instructor o administrador")
         return value
     
     def validate(self, attrs):
