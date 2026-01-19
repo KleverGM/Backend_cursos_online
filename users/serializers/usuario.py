@@ -5,7 +5,7 @@ User = get_user_model()
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True, min_length=8, required=False)
     password_confirm = serializers.CharField(write_only=True, required=False)
     tipo_usuario = serializers.CharField(write_only=True, required=False)
     
@@ -26,9 +26,18 @@ class UsuarioSerializer(serializers.ModelSerializer):
         if 'password_confirm' in attrs:
             if attrs.get('password') != attrs.get('password_confirm'):
                 raise serializers.ValidationError("Las contraseñas no coinciden")
+        
+        # En creación, password es obligatorio
+        if not self.instance and 'password' not in attrs:
+            raise serializers.ValidationError("password es requerido al crear un usuario")
+        
         return attrs
     
     def create(self, validated_data):
+        # Validar que password esté presente
+        if 'password' not in validated_data:
+            raise serializers.ValidationError("password es requerido")
+        
         # Mapear tipo_usuario a perfil
         if 'tipo_usuario' in validated_data:
             validated_data['perfil'] = validated_data.pop('tipo_usuario')
