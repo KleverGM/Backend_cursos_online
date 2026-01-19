@@ -14,6 +14,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
                  'perfil', 'fecha_creacion', 'password', 'password_confirm', 'tipo_usuario', 'is_active')
         read_only_fields = ('fecha_creacion',)
+        extra_kwargs = {
+            'username': {'required': False},
+            'email': {'required': False},
+        }
     
     def validate_tipo_usuario(self, value):
         """Validar que tipo_usuario sea válido"""
@@ -57,6 +61,18 @@ class UsuarioSerializer(serializers.ModelSerializer):
         # Remover campos que no se deben actualizar aquí
         validated_data.pop('password', None)
         validated_data.pop('password_confirm', None)
+        
+        # Validar unicidad de email si se está actualizando
+        if 'email' in validated_data:
+            email = validated_data['email']
+            if User.objects.exclude(pk=instance.pk).filter(email=email).exists():
+                raise serializers.ValidationError({'email': 'Este email ya está en uso'})
+        
+        # Validar unicidad de username si se está actualizando
+        if 'username' in validated_data:
+            username = validated_data['username']
+            if User.objects.exclude(pk=instance.pk).filter(username=username).exists():
+                raise serializers.ValidationError({'username': 'Este username ya está en uso'})
         
         # Actualizar campos
         for attr, value in validated_data.items():
