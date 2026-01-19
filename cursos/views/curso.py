@@ -120,8 +120,8 @@ class CursoViewSet(viewsets.ModelViewSet):
     
     def perform_destroy(self, instance):
         """
-        Desactivar curso (soft delete).
-        No permite eliminar si hay estudiantes inscritos o contenido creado.
+        Eliminar curso si no tiene contenido relacionado.
+        Si tiene estudiantes/módulos/reseñas, solo desactiva (soft delete).
         """
         if not CustomPermission.es_propietario_o_admin(self.request.user, instance):
             raise permissions.PermissionDenied("No tienes permisos para eliminar este curso")
@@ -162,9 +162,8 @@ class CursoViewSet(viewsets.ModelViewSet):
                 'accion_recomendada': 'Usa el endpoint /desactivar/ en su lugar'
             })
         
-        # Si no hay nada relacionado, permitir desactivación (soft delete)
-        instance.activo = False
-        instance.save()
+        # Si no hay nada relacionado, ELIMINAR FÍSICAMENTE el curso
+        instance.delete()
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def inscribirse(self, request, pk=None):
