@@ -100,6 +100,49 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         
         serializer = EstadisticasUsuarioSerializer(estadisticas)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def cambiar_password(self, request, pk=None):
+        """Cambiar la contraseña de un usuario (admin o el mismo usuario)"""
+        user = self.get_object()
+        
+        # Verificar permisos
+        if request.user.perfil != 'administrador' and request.user.id != user.id:
+            raise PermissionDenied("Sin permisos para cambiar la contraseña de este usuario")
+        
+        new_password = request.data.get('new_password')
+        current_password = request.data.get('current_password')
+        
+        if not new_password:
+            return Response({
+                'error': 'new_password es requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Si no es admin, debe proporcionar la contraseña actual
+        if request.user.perfil != 'administrador':
+            if not current_password:
+                return Response({
+                    'error': 'current_password es requerido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not user.check_password(current_password):
+                return Response({
+                    'error': 'Contraseña actual incorrecta'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validar longitud de contraseña
+        if len(new_password) < 8:
+            return Response({
+                'error': 'La contraseña debe tener al menos 8 caracteres'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Cambiar contraseña
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Contraseña actualizada exitosamente'
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
