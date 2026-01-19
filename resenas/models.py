@@ -1,3 +1,3 @@
-from .models import Resena
+from .models.resenas import Resena, Respuesta
 
-__all__ = ['Resena']
+__all__ = ['Resena', 'Respuesta']

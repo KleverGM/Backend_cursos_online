@@ -222,8 +222,16 @@ class ResenaViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def mis_resenas(self, request):
-        """Obtener todas las reseñas del usuario actual"""
-        resenas = Resena.objects(usuario_id=request.user.id).order_by('-fecha_creacion')
+        """Obtener reseñas del usuario actual - estudiante: sus reseñas, instructor: reseñas de sus cursos"""
+        if request.user.perfil == 'instructor':
+            # Para instructores: obtener reseñas de sus cursos
+            from cursos.models import Curso
+            mis_cursos = Curso.objects.filter(instructor=request.user).values_list('id', flat=True)
+            resenas = Resena.objects(curso_id__in=list(mis_cursos)).order_by('-fecha_creacion')
+        else:
+            # Para estudiantes: obtener sus propias reseñas
+            resenas = Resena.objects(usuario_id=request.user.id).order_by('-fecha_creacion')
+        
         serializer = ResenaSerializer(list(resenas), many=True, context={'request': request})
         return Response(serializer.data)
     

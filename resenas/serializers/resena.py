@@ -32,6 +32,7 @@ class ResenaSerializer(serializers.Serializer):
     
     # Campos calculados
     nombre_usuario = serializers.SerializerMethodField()
+    titulo_curso = serializers.SerializerMethodField()
     es_mia = serializers.SerializerMethodField()
     
     def get_nombre_usuario(self, obj):
@@ -41,6 +42,15 @@ class ResenaSerializer(serializers.Serializer):
             return f"{user.first_name} {user.last_name}".strip() or user.username
         except User.DoesNotExist:
             return "Usuario desconocido"
+    
+    def get_titulo_curso(self, obj):
+        """Obtener título del curso desde PostgreSQL"""
+        try:
+            from cursos.models import Curso
+            curso = Curso.objects.get(id=obj.curso_id)
+            return curso.titulo
+        except:
+            return f"Curso {obj.curso_id}"
     
     def get_es_mia(self, obj):
         """Verificar si la reseña es del usuario actual"""

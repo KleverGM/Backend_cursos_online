@@ -182,7 +182,7 @@ Curso
 - Progreso promedio en todos los cursos
 - Tiempo total estudiado
 
-### 6. Sistema de Avisos y Notificaciones
+### 6. Sistema de Avisos
 
 **Tipos de Avisos:**
 
@@ -204,6 +204,141 @@ Curso
 - Filtrado por tipo y estado de lectura
 - Ordenamiento por fecha (más recientes primero)
 
+### 6.1. Sistema de Notificaciones (MongoDB)
+
+**Arquitectura:**
+
+- Base de datos MongoDB independiente para notificaciones
+- Integración con MongoEngine para ODM
+- Soporte para WebSockets con Django Channels
+- Notificaciones automáticas mediante señales de Django
+
+**Tipos de Notificaciones:**
+
+- `nueva_inscripcion`: Notifica al instructor cuando un estudiante se inscribe
+- `curso_completado`: Felicitación cuando un estudiante completa un curso (100%)
+- `nueva_resena`: Cuando un estudiante deja una reseña en un curso
+- `curso_actualizado`: Notificaciones sobre cambios en cursos
+- `sistema`: Notificaciones administrativas del sistema
+- `respuesta_comentario`: Respuestas a comentarios de reseñas
+- `mensaje_directo`: Mensajes directos entre usuarios
+
+**Notificaciones Automáticas:**
+
+- ✅ **Inscripción a curso**: Se crean 2 notificaciones automáticamente
+  - Notificación al instructor sobre nueva inscripción
+  - Notificación de bienvenida al estudiante
+- ✅ **Curso completado**: Se crean 2 notificaciones al alcanzar 100% de progreso
+  - Felicitación al estudiante por completar el curso
+  - Notificación al instructor sobre el logro del estudiante
+
+**Características:**
+
+- Estado de lectura (leída/no leída)
+- Timestamps de creación y lectura
+- Datos adicionales personalizados (datos_extra)
+- Contador de notificaciones no leídas
+- Filtrado por estado de lectura
+- Entrega en tiempo real vía WebSockets
+
+**Endpoints:**
+
+- `GET /api/notificaciones/` - Listar todas las notificaciones del usuario
+- `GET /api/notificaciones/no_leidas/` - Solo notificaciones no leídas
+- `POST /api/notificaciones/{id}/marcar_leida/` - Marcar como leída
+- `GET /api/notificaciones/contador/` - Contador de no leídas
+- `POST /api/notificaciones/` - Crear notificación manual (admin)
+
+### 6.2. Sistema de Reseñas (MongoDB)
+
+**Arquitectura:**
+
+- Almacenamiento en MongoDB para flexibilidad
+- Una reseña por usuario por curso (índice único)
+- Soporte para respuestas anidadas del instructor
+- Sistema de utilidad (reseñas útiles)
+
+**Modelo de Reseña:**
+
+- Rating: 1.0 - 5.0 estrellas
+- Título y comentario detallado
+- Verificación de compra (inscripción válida)
+- Imágenes adjuntas (opcional)
+- Tags/etiquetas
+- Timestamps de creación y modificación
+
+**Características:**
+
+- ✅ Crear/editar/eliminar reseña (solo propietario)
+- ✅ Responder a reseñas (instructores)
+- ✅ Marcar reseña como útil
+- ✅ Contador de utilidad
+- ✅ Mis reseñas (listado personal)
+- ✅ Estadísticas por curso (promedio de ratings)
+- ✅ Validación: una reseña por usuario por curso
+
+**Endpoints:**
+
+- `GET /api/resenas/` - Listar reseñas (filtro por curso_id)
+- `POST /api/resenas/` - Crear reseña
+- `GET /api/resenas/{id}/` - Detalle de reseña
+- `PUT/PATCH /api/resenas/{id}/` - Actualizar reseña
+- `DELETE /api/resenas/{id}/` - Eliminar reseña
+- `POST /api/resenas/{id}/marcar_util/` - Marcar como útil
+- `POST /api/resenas/{id}/responder/` - Responder (instructor)
+- `GET /api/resenas/mis_resenas/` - Mis reseñas
+- `GET /api/resenas/estadisticas_curso/` - Estadísticas por curso
+
+### 6.3. Analytics y Eventos (MongoDB)
+
+**Arquitectura:**
+
+- Sistema de tracking de eventos de usuario
+- Almacenamiento en MongoDB para big data
+- Análisis de comportamiento y patrones
+- Solo accesible para administradores
+
+**Tipos de Eventos Rastreados:**
+
+- `page_view`: Vista de página general
+- `curso_view`: Vista de detalle de curso
+- `seccion_view`: Vista de sección específica
+- `video_start`: Inicio de reproducción de video
+- `video_complete`: Video completado
+- `curso_inscripcion`: Inscripción a curso
+- `resena_create`: Creación de reseña
+- `search`: Búsquedas realizadas
+- `click`: Clics en elementos
+- `download`: Descargas de archivos
+- `login/logout`: Sesiones de usuario
+
+**Datos Capturados:**
+
+- Usuario ID y timestamp
+- Tipo de evento
+- Curso/Módulo/Sección relacionados
+- Metadata flexible (JSON)
+- Información de sesión (IP, User Agent)
+- URL y referrer
+- Duración en segundos
+
+**Endpoints:**
+
+- `POST /api/analytics/eventos/` - Registrar evento (autenticado)
+- `GET /api/analytics/eventos/` - Listar eventos (solo admin)
+- `GET /api/analytics/eventos/{id}/` - Detalle evento (solo admin)
+- `GET /api/analytics/eventos/estadisticas_usuario/` - Stats por usuario (admin)
+- `GET /api/analytics/eventos/eventos_recientes/` - Eventos recientes (admin)
+- `GET /api/analytics/eventos/cursos_populares/` - Cursos más visitados (admin)
+
+**Uso:**
+
+- Análisis de comportamiento de usuarios
+- Identificación de cursos populares
+- Optimización de contenido
+- Detección de patrones de abandono
+- Métricas de engagement
+
 ### 7. Permisos y Seguridad
 
 **Control de Acceso:**
@@ -218,6 +353,9 @@ Curso
 - Estudiantes solo pueden ver sus propias inscripciones
 - Administradores tienen acceso completo
 - Endpoints públicos para listado de cursos
+- Una reseña por usuario por curso
+- Solo instructores pueden responder reseñas
+- Solo administradores pueden acceder a analytics
 
 **Validaciones:**
 
@@ -225,6 +363,8 @@ Curso
 - Validación de datos en registro y login
 - Verificación de tokens JWT en cada petición
 - Límites en valores de progreso (0-100%)
+- Rating de reseñas entre 1.0 y 5.0
+- Verificación de compra para crear reseña
 
 ### 8. Filtros y Búsqueda Avanzada
 
@@ -234,12 +374,16 @@ Curso
 - Cursos: por categoría, nivel, instructor, búsqueda en título/descripción
 - Inscripciones: por estado de completado
 - Avisos: por tipo, estado de lectura
+- Notificaciones: por estado de lectura (leída/no leída)
+- Reseñas: por curso_id, rating, usuario
+- Analytics: por usuario_id, tipo_evento, rango de fechas
 
 **Ordenamiento:**
 
 - Por fecha de creación
 - Por nombre o título
 - Por precio (cursos)
+- Por rating (reseñas)
 - Ordenamiento ascendente o descendente
 
 ### 9. API RESTful Completa
@@ -258,6 +402,15 @@ Curso
 - `/api/cursos/{id}/inscribirse/` - Inscripción a curso
 - `/api/secciones/{id}/marcar_completado/` - Marcar sección completada
 - `/api/avisos/{id}/marcar_leido/` - Marcar aviso como leído
+- `/api/notificaciones/no_leidas/` - Listar notificaciones no leídas
+- `/api/notificaciones/{id}/marcar_leida/` - Marcar notificación como leída
+- `/api/notificaciones/contador/` - Contador de notificaciones no leídas
+- `/api/resenas/{id}/marcar_util/` - Marcar reseña como útil
+- `/api/resenas/{id}/responder/` - Responder a reseña
+- `/api/resenas/mis_resenas/` - Listar mis reseñas
+- `/api/resenas/estadisticas_curso/` - Estadísticas de reseñas por curso
+- `/api/analytics/eventos/estadisticas_usuario/` - Estadísticas por usuario
+- `/api/analytics/eventos/cursos_populares/` - Cursos más visitados
 
 **Documentación:**
 
@@ -270,6 +423,9 @@ Curso
 ### Prerrequisitos
 
 - Python 3.11+
+- PostgreSQL 13+
+- MongoDB 6.0+
+- Redis (para WebSockets)
 - pip
 
 ### 1. Clonar repositorio
@@ -294,10 +450,22 @@ pip install -r requirements.txt
 
 ### 4. Configurar base de datos
 
+**PostgreSQL:**
+
 ```bash
 python manage.py migrate
 python manage.py createsuperuser
 ```
+
+**MongoDB:**
+
+- Configurar conexión en `settings.py`
+- Las colecciones se crean automáticamente: `notificaciones`, `resenas`, `eventos_usuario`
+
+**Redis (opcional para WebSockets):**
+
+- Instalar Redis y configurar en `settings.py`
+- Requerido solo para notificaciones en tiempo real
 
 ### 5. Ejecutar servidor
 
@@ -405,6 +573,35 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 - `POST /api/avisos/` - Crear aviso
 - `PUT /api/avisos/{id}/` - Actualizar aviso
 
+### Notificaciones
+
+- `GET /api/notificaciones/` - Listar notificaciones del usuario
+- `GET /api/notificaciones/no_leidas/` - Solo no leídas
+- `POST /api/notificaciones/{id}/marcar_leida/` - Marcar como leída
+- `GET /api/notificaciones/contador/` - Contador de no leídas
+- `POST /api/notificaciones/` - Crear notificación (admin)
+
+### Reseñas
+
+- `GET /api/resenas/` - Listar reseñas (filtro por curso_id)
+- `POST /api/resenas/` - Crear reseña
+- `GET /api/resenas/{id}/` - Detalle de reseña
+- `PUT/PATCH /api/resenas/{id}/` - Actualizar reseña
+- `DELETE /api/resenas/{id}/` - Eliminar reseña
+- `POST /api/resenas/{id}/marcar_util/` - Marcar como útil
+- `POST /api/resenas/{id}/responder/` - Responder (instructor)
+- `GET /api/resenas/mis_resenas/` - Mis reseñas
+- `GET /api/resenas/estadisticas_curso/` - Estadísticas por curso
+
+### Analytics
+
+- `POST /api/analytics/eventos/` - Registrar evento
+- `GET /api/analytics/eventos/` - Listar eventos (admin)
+- `GET /api/analytics/eventos/{id}/` - Detalle evento (admin)
+- `GET /api/analytics/eventos/estadisticas_usuario/` - Stats por usuario (admin)
+- `GET /api/analytics/eventos/eventos_recientes/` - Eventos recientes (admin)
+- `GET /api/analytics/eventos/cursos_populares/` - Cursos más visitados (admin)
+
 ## Ejemplos de Uso con Token
 
 ### 1. Crear un curso (como instructor)
@@ -484,6 +681,58 @@ curl -X POST http://localhost:8000/api/secciones/1/marcar_completado/ \
 curl http://localhost:8000/api/inscripciones/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
+
+### 8. Listar notificaciones no leídas
+
+```bash
+curl http://localhost:8000/api/notificaciones/no_leidas/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### 9. Crear reseña
+
+```bash
+curl -X POST http://localhost:8000/api/resenas/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "curso_id": 1,
+    "rating": 4.5,
+    "titulo": "Excelente curso",
+    "comentario": "Aprendí mucho, muy recomendado"
+  }'
+```
+
+### 10. Registrar evento de analytics
+
+```bash
+curl -X POST http://localhost:8000/api/analytics/eventos/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tipo_evento": "curso_view",
+    "curso_id": 1,
+    "duracion_segundos": 120
+  }'
+```
+
+## Tecnologías Utilizadas
+
+### Backend
+
+- **Django 5.2.8**: Framework web principal
+- **Django REST Framework**: API REST
+- **PostgreSQL**: Base de datos relacional principal
+- **MongoDB + MongoEngine**: Base de datos NoSQL para notificaciones, reseñas y analytics
+- **Redis + Django Channels**: WebSockets para notificaciones en tiempo real
+- **Simple JWT**: Autenticación con tokens JWT
+
+### Despliegue
+
+- **Gunicorn**: Servidor WSGI
+- **Nginx**: Reverse proxy
+- **GitHub Actions**: CI/CD pipeline
+- **Azure VM**: Hosting en la nube
 
 ## Integración y Despliegue Continuo (CI/CD)
 
