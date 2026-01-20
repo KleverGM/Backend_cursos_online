@@ -3,10 +3,20 @@ from ..models import Seccion, ProgresoSeccion
 
 
 class SeccionSerializer(serializers.ModelSerializer):
+    archivo = serializers.FileField(required=False, allow_null=True)
+    
     class Meta:
         model = Seccion
         fields = ('id', 'titulo', 'contenido', 'video_url', 'archivo', 
-                 'orden', 'duracion_minutos', 'modulo')
+                 'orden', 'duracion_minutos', 'modulo', 'es_preview')
+        
+    def validate(self, data):
+        # Asegurar que al menos haya contenido, video o archivo
+        if not data.get('contenido') and not data.get('video_url') and not data.get('archivo'):
+            raise serializers.ValidationError(
+                "La sección debe tener al menos contenido de texto, un video o un archivo"
+            )
+        return data
 
 
 class SeccionDetalladaSerializer(serializers.ModelSerializer):
