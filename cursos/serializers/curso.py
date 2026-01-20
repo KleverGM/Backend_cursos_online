@@ -49,9 +49,8 @@ class CursoSerializer(serializers.ModelSerializer):
         return obj.inscripciones.count()
     
     def create(self, validated_data):
-        request = self.context.get('request')
-        if request:
-            validated_data['instructor'] = request.user
+        # El instructor se establece en la vista (perform_create)
+        # No sobrescribir aquí para permitir que admin asigne instructores
         return super().create(validated_data)
 
 

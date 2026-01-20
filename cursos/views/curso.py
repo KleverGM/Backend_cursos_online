@@ -116,7 +116,17 @@ class CursoViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         if not CustomPermission.es_propietario_o_admin(self.request.user, self.get_object()):
             raise permissions.PermissionDenied("No tienes permisos para editar este curso")
-        serializer.save()
+        
+        # Si es administrador y proporciona instructor_id, actualizar el instructor
+        instructor_id = serializer.validated_data.get('instructor_id')
+        if self.request.user.perfil == 'administrador' and instructor_id:
+            try:
+                instructor = User.objects.get(id=instructor_id)
+                serializer.save(instructor=instructor)
+            except User.DoesNotExist:
+                raise exceptions.ValidationError("Instructor no encontrado")
+        else:
+            serializer.save()
     
     def perform_destroy(self, instance):
         """
