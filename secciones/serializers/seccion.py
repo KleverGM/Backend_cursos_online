@@ -4,15 +4,31 @@ from ..models import Seccion, ProgresoSeccion
 
 class SeccionSerializer(serializers.ModelSerializer):
     archivo = serializers.FileField(required=False, allow_null=True)
+    video_file = serializers.FileField(required=False, allow_null=True)
+    video_url_completa = serializers.SerializerMethodField()
     
     class Meta:
         model = Seccion
-        fields = ('id', 'titulo', 'contenido', 'video_url', 'archivo', 
-                 'orden', 'duracion_minutos', 'modulo', 'es_preview')
+        fields = ('id', 'titulo', 'contenido', 'video_url', 'video_file', 
+                 'video_url_completa', 'archivo', 'orden', 'duracion_minutos', 
+                 'modulo', 'es_preview')
+    
+    def get_video_url_completa(self, obj):
+        """Devuelve la URL completa del video, ya sea YouTube o archivo subido"""
+        request = self.context.get('request')
+        
+        # Si tiene video_file (MP4 subido), devolver URL completa
+        if obj.video_file:
+            if request:
+                return request.build_absolute_uri(obj.video_file.url)
+            return obj.video_file.url
+        
+        # Si no, devolver video_url (YouTube)
+        return obj.video_url
         
     def validate(self, data):
         # Asegurar que al menos haya contenido, video o archivo
-        if not data.get('contenido') and not data.get('video_url') and not data.get('archivo'):
+        if not data.get('contenido') and not data.get('video_url') and not data.get('video_file') and not data.get('archivo'):
             raise serializers.ValidationError(
                 "La sección debe tener al menos contenido de texto, un video o un archivo"
             )
@@ -22,11 +38,26 @@ class SeccionSerializer(serializers.ModelSerializer):
 class SeccionDetalladaSerializer(serializers.ModelSerializer):
     """Serializer con información de progreso para usuarios autenticados"""
     progreso_usuario = serializers.SerializerMethodField()
+    video_url_completa = serializers.SerializerMethodField()
     
     class Meta:
         model = Seccion
-        fields = ('id', 'titulo', 'contenido', 'video_url', 'archivo', 
-                 'orden', 'duracion_minutos', 'modulo', 'progreso_usuario')
+        fields = ('id', 'titulo', 'contenido', 'video_url', 'video_file',
+                 'video_url_completa', 'archivo', 'orden', 'duracion_minutos', 
+                 'modulo', 'progreso_usuario')
+    
+    def get_video_url_completa(self, obj):
+        """Devuelve la URL completa del video, ya sea YouTube o archivo subido"""
+        request = self.context.get('request')
+        
+        # Si tiene video_file (MP4 subido), devolver URL completa
+        if obj.video_file:
+            if request:
+                return request.build_absolute_uri(obj.video_file.url)
+            return obj.video_file.url
+        
+        # Si no, devolver video_url (YouTube)
+        return obj.video_url
     
     def get_progreso_usuario(self, obj):
         request = self.context.get('request')

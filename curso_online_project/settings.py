@@ -324,6 +324,13 @@ LOGGING = {
 }
 
 # ============================================
+# FILE UPLOAD CONFIGURATION
+# ============================================
+# Permitir archivos grandes (500 MB para videos)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
+
+# ============================================
 # MONGODB CONFIGURATION (MongoEngine)
 # ============================================
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017')

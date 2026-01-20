@@ -6,7 +6,14 @@ class Seccion(models.Model):
     """Modelo para las secciones de contenido dentro de los módulos"""
     titulo = models.CharField(max_length=200, verbose_name='Título de la sección')
     contenido = models.TextField(verbose_name='Contenido de texto')
-    video_url = models.URLField(blank=True, null=True, verbose_name='URL del video')
+    video_url = models.URLField(blank=True, null=True, verbose_name='URL del video (YouTube, etc)')
+    video_file = models.FileField(
+        upload_to='videos/', 
+        blank=True, 
+        null=True,
+        verbose_name='Archivo de video MP4',
+        help_text='Sube un archivo MP4 aquí o usa video_url para YouTube'
+    )
     archivo = models.FileField(upload_to='secciones/', blank=True, null=True)
     orden = models.PositiveIntegerField(default=1)
     modulo = models.ForeignKey(Modulo, on_delete=models.CASCADE, related_name='secciones')
