@@ -8,16 +8,16 @@ User = get_user_model()
 class Aviso(models.Model):
     """Modelo para avisos y notificaciones del sistema"""
     TIPO_CHOICES = [
-        ('general', 'General'),
-        ('curso', 'Relacionado con curso'),
-        ('sistema', 'Sistema'),
-        ('promocion', 'Promoción'),
+        ('aviso', 'Aviso'),
+        ('mensaje_sistema', 'Mensaje del Sistema'),
+        ('recordatorio', 'Recordatorio'),
+        ('urgente', 'Urgente'),
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='avisos')
     titulo = models.CharField(max_length=200, verbose_name='Título del aviso')
     descripcion = models.TextField(verbose_name='Descripción del aviso')
-    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='general')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='aviso')
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_envio = models.DateTimeField(blank=True, null=True)
     leido = models.BooleanField(default=False)
