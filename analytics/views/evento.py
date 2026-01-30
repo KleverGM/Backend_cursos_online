@@ -111,6 +111,72 @@ class EventoUsuarioViewSet(viewsets.ViewSet):
         })
     
     @action(detail=False, methods=['get'])
+    def estadisticas(self, request):
+        """Estadísticas de actividad recientes"""
+        from cursos.models import Curso
+        
+        # Fechas
+        ahora = datetime.utcnow()
+        inicio_hoy = datetime(ahora.year, ahora.month, ahora.day)
+        inicio_semana = ahora - timedelta(days=7)
+        inicio_mes = ahora - timedelta(days=30)
+        
+        # Eventos hoy
+        eventos_hoy = EventoUsuario.objects(fecha_hora__gte=inicio_hoy).count()
+        
+        # Eventos semana
+        eventos_semana = EventoUsuario.objects(fecha_hora__gte=inicio_semana).count()
+        
+        # Eventos mes
+        eventos_mes = EventoUsuario.objects(fecha_hora__gte=inicio_mes).count()
+        
+        # Usuarios activos (únicos en el mes)
+        eventos_mes_list = list(EventoUsuario.objects(fecha_hora__gte=inicio_mes))
+        usuarios_activos = len(set(e.usuario_id for e in eventos_mes_list))
+        
+        # Eventos por tipo (mes)
+        eventos_por_tipo = {}
+        for evento in eventos_mes_list:
+            eventos_por_tipo[evento.tipo_evento] = eventos_por_tipo.get(evento.tipo_evento, 0) + 1
+        
+        # Cursos más visitados (mes)
+        cursos_visitas = {}
+        for evento in eventos_mes_list:
+            if evento.curso_id and evento.tipo_evento == 'curso_view':
+                cursos_visitas[evento.curso_id] = cursos_visitas.get(evento.curso_id, 0) + 1
+        
+        cursos_top = sorted(cursos_visitas.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        # Obtener títulos de cursos
+        cursos_mas_visitados = []
+        for curso_id, visitas in cursos_top:
+            try:
+                curso = Curso.objects.get(id=curso_id)
+                cursos_mas_visitados.append({
+                    'curso_id': curso_id,
+                    'titulo': curso.titulo,
+                    'visitas': visitas
+                })
+            except Curso.DoesNotExist:
+                # Si el curso fue eliminado, incluirlo de todas formas
+                cursos_mas_visitados.append({
+                    'curso_id': curso_id,
+                    'titulo': f'Curso #{curso_id} (eliminado)',
+                    'visitas': visitas
+                })
+        
+        return Response({
+            'total_eventos': eventos_mes,
+            'eventos_hoy': eventos_hoy,
+            'eventos_semana': eventos_semana,
+            'eventos_mes': eventos_mes,
+            'usuarios_activos': usuarios_activos,
+            'eventos_por_tipo': eventos_por_tipo,
+            'cursos_mas_visitados': cursos_mas_visitados
+        })
+
+    
+    @action(detail=False, methods=['get'])
     def estadisticas_globales(self, request):
         """Estadísticas globales de la plataforma"""
         dias = int(request.query_params.get('dias', 7))

@@ -336,3 +336,66 @@ class CursoViewSet(viewsets.ModelViewSet):
             'completados_semana': completados_semana,
             'ingresos_totales': float(ingresos_totales),
         })
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def estadisticas_globales(self, request):
+        """Obtener estadísticas globales de la plataforma"""
+        from inscripciones.models import Inscripcion
+        from resenas.models import Resena
+        
+        # Verificar que sea administrador
+        if request.user.perfil != 'administrador':
+            return Response(
+                {'error': 'Solo administradores pueden ver estadísticas globales'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Cursos
+        total_cursos = Curso.objects.count()
+        cursos_activos = Curso.objects.filter(activo=True).count()
+        
+        # Usuarios
+        total_estudiantes = User.objects.filter(perfil='estudiante').count()
+        total_instructores = User.objects.filter(perfil='instructor').count()
+        
+        # Estudiantes nuevos este mes
+        hace_un_mes = datetime.now() - timedelta(days=30)
+        nuevos_estudiantes_mes = User.objects.filter(
+            perfil='estudiante',
+            date_joined__gte=hace_un_mes
+        ).count()
+        
+        # Inscripciones
+        total_inscripciones = Inscripcion.objects.count()
+        
+        # Cursos más populares (por número de inscripciones)
+        cursos_populares = Curso.objects.annotate(
+            num_inscripciones=Count('inscripcion')
+        ).order_by('-num_inscripciones')[:5]
+        
+        cursos_populares_data = []
+        for curso in cursos_populares:
+            cursos_populares_data.append({
+                'id': curso.id,
+                'titulo': curso.titulo,
+                'instructor': curso.instructor.get_full_name() if curso.instructor.first_name else curso.instructor.username,
+                'num_inscripciones': curso.num_inscripciones,
+                'imagen': curso.imagen.url if curso.imagen else None
+            })
+        
+        # Ingresos totales
+        ingresos_totales = 0
+        for curso in Curso.objects.all():
+            inscripciones_count = Inscripcion.objects.filter(curso=curso).count()
+            ingresos_totales += curso.precio * inscripciones_count
+        
+        return Response({
+            'total_cursos': total_cursos,
+            'cursos_activos': cursos_activos,
+            'total_estudiantes': total_estudiantes,
+            'total_instructores': total_instructores,
+            'nuevos_estudiantes_mes': nuevos_estudiantes_mes,
+            'total_inscripciones': total_inscripciones,
+            'cursos_populares': cursos_populares_data,
+            'ingresos_totales': float(ingresos_totales)
+        })
