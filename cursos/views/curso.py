@@ -370,7 +370,7 @@ class CursoViewSet(viewsets.ModelViewSet):
         
         # Cursos más populares (por número de inscripciones)
         cursos_populares = Curso.objects.annotate(
-            num_inscripciones=Count('inscripcion')
+            num_inscripciones=Count('inscripciones')
         ).order_by('-num_inscripciones')[:5]
         
         cursos_populares_data = []
