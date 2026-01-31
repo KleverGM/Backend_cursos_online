@@ -60,4 +60,7 @@ class ModuloViewSet(viewsets.ModelViewSet):
         # Solo el instructor del curso o admin pueden eliminar módulos
         if not CustomPermission.es_propietario_o_admin(self.request.user, instance.curso):
             raise permissions.PermissionDenied("No tienes permisos para eliminar este módulo")
+        
+        # Eliminar explícitamente las secciones primero (aunque CASCADE debería hacerlo)
+        instance.secciones.all().delete()
         instance.delete()
