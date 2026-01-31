@@ -63,9 +63,31 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return User.objects.filter(is_active=True)
     
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve'] and self.request.user.perfil != 'administrador':
+        # Usuarios pueden ver su propio perfil completo
+        # Admins pueden ver todo
+        # Otros usuarios ven versión pública
+        if self.action == 'list' and self.request.user.perfil != 'administrador':
             return UsuarioPublicSerializer
         return UsuarioSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Sobrescribir retrieve para permitir que usuarios vean su propio perfil completo
+        pero solo versión pública de otros usuarios
+        """
+        instance = self.get_object()
+        
+        # Admin ve todo con UsuarioSerializer
+        if request.user.perfil == 'administrador':
+            serializer = UsuarioSerializer(instance)
+        # Usuario viendo su propio perfil
+        elif instance.id == request.user.id:
+            serializer = UsuarioSerializer(instance)
+        # Usuario viendo perfil de otro
+        else:
+            serializer = UsuarioPublicSerializer(instance)
+        
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def perfil(self, request):

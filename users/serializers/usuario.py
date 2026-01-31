@@ -7,24 +7,22 @@ User = get_user_model()
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, required=False)
     password_confirm = serializers.CharField(write_only=True, required=False)
-    tipo_usuario = serializers.CharField(write_only=True, required=False)
+    tipo_usuario = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                 'perfil', 'fecha_creacion', 'password', 'password_confirm', 'tipo_usuario', 'is_active')
-        read_only_fields = ('fecha_creacion',)
+                 'perfil', 'tipo_usuario', 'fecha_creacion', 'password', 'password_confirm', 'is_active')
+        read_only_fields = ('fecha_creacion', 'tipo_usuario')
         extra_kwargs = {
             'username': {'required': False},
             'email': {'required': False},
             'perfil': {'required': False},
         }
     
-    def validate_tipo_usuario(self, value):
-        """Validar que tipo_usuario sea válido"""
-        if value and value not in ['estudiante', 'instructor', 'administrador']:
-            raise serializers.ValidationError("tipo_usuario debe ser: estudiante, instructor o administrador")
-        return value
+    def get_tipo_usuario(self, obj):
+        """Retornar el perfil como tipo_usuario"""
+        return obj.perfil
     
     def validate_perfil(self, value):
         """Validar que perfil sea válido"""
@@ -49,10 +47,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
         if 'password' not in validated_data:
             raise serializers.ValidationError("password es requerido")
         
-        # Mapear tipo_usuario a perfil
-        if 'tipo_usuario' in validated_data:
-            validated_data['perfil'] = validated_data.pop('tipo_usuario')
-        
         validated_data.pop('password_confirm', None)
         password = validated_data.pop('password')
         user = User.objects.create_user(**validated_data)
@@ -61,10 +55,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return user
     
     def update(self, instance, validated_data):
-        # Mapear tipo_usuario a perfil en actualización
-        if 'tipo_usuario' in validated_data:
-            validated_data['perfil'] = validated_data.pop('tipo_usuario')
-        
         # Remover campos que no se deben actualizar aquí
         validated_data.pop('password', None)
         validated_data.pop('password_confirm', None)
@@ -95,7 +85,7 @@ class UsuarioPublicSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'tipo_usuario', 'email')
+        fields = ('id', 'username', 'first_name', 'last_name', 'tipo_usuario', 'perfil', 'email')
 
 
 class UsuarioResponseSerializer(serializers.ModelSerializer):
